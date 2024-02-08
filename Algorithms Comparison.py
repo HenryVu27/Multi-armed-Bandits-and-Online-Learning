@@ -57,7 +57,6 @@ optimal_mean = max(true_means)
 N = 10000  # number of times we pull an arm
 M = 1000   # exploration phase for etc
 
-# Create bandits
 eg_bandits = [Bandit(m) for m in true_means]
 ucb_bandits = [Bandit(m) for m in true_means]
 etc_bandits = [Bandit(m) for m in true_means]
