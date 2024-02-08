@@ -14,7 +14,7 @@ class Bandit:
         self.N += 1
         self.estimated_mean = (1 - 1.0 / self.N) * self.estimated_mean + 1.0 / self.N * reward
 
-# Epsilon-Greedy algorithm
+# e-greedy
 def epsilon_greedy(bandits, N, epsilon=0.1):
     rewards = np.zeros(N)
     for t in range(N):
@@ -27,7 +27,7 @@ def epsilon_greedy(bandits, N, epsilon=0.1):
         rewards[t] = reward
     return rewards
 
-# UCB1 algorithm
+# UCB
 def ucb1(bandits, N):
     rewards = np.zeros(N)
     for t in range(N):
@@ -37,7 +37,7 @@ def ucb1(bandits, N):
         rewards[t] = reward
     return rewards
 
-# Explore-Then-Commit algorithm
+# ETC
 def explore_then_commit(bandits, N, M):
     rewards = np.zeros(N)
     for t in range(N):
@@ -52,23 +52,20 @@ def explore_then_commit(bandits, N, M):
         rewards[t] = reward
     return rewards
 
-# Simulation parameters
-true_means = [1.0, 2.0, 3.0, 2.2, 2.5, 5.0, 4.0]  # True means of the bandit arms
+true_means = [1.0, 2.0, 3.0, 2.2, 2.5, 5.0, 4.0] 
 optimal_mean = max(true_means)
-N = 10000  # Number of times we pull an arm
-M = 1000   # Exploration phase for Explore-Then-Commit
+N = 10000  # number of times we pull an arm
+M = 1000   # exploration phase for etc
 
 # Create bandits
 eg_bandits = [Bandit(m) for m in true_means]
 ucb_bandits = [Bandit(m) for m in true_means]
 etc_bandits = [Bandit(m) for m in true_means]
 
-# Run the simulations
 eg_rewards = epsilon_greedy(eg_bandits, N)
 ucb_rewards = ucb1(ucb_bandits, N)
 etc_rewards = explore_then_commit(etc_bandits, N, M)
 
-# Calculate cumulative rewards and regrets
 eg_cumulative_rewards = np.cumsum(eg_rewards)
 ucb_cumulative_rewards = np.cumsum(ucb_rewards)
 etc_cumulative_rewards = np.cumsum(etc_rewards)
@@ -77,7 +74,7 @@ eg_regret = np.arange(N) * optimal_mean - eg_cumulative_rewards
 ucb_regret = np.arange(N) * optimal_mean - ucb_cumulative_rewards
 etc_regret = np.arange(N) * optimal_mean - etc_cumulative_rewards
 
-# Plotting the regret
+# plot
 plt.figure(figsize=(12, 8))
 plt.plot(eg_regret, label='Epsilon-Greedy Regret')
 plt.plot(ucb_regret, label='UCB1 Regret')
