@@ -1,64 +1,51 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+np.set_printoptions(suppress=True, precision=2)
 
-class Exp3:
-    def __init__(self, num_arms, learning_rate):
-        self.num_arms = num_arms
-        self.learning_rate = learning_rate
-        self.weights = np.ones(num_arms)
-        self.probabilities = np.ones(num_arms) / num_arms
-        self.rewards = np.zeros(num_arms)  # Store cumulative rewards
-        self.history = []  # Store history of chosen arms and rewards
 
-    def select_arm(self):
-        """Select an arm based on the computed probabilities."""
-        chosen_arm = np.random.choice(self.num_arms, p=self.probabilities)
-        return chosen_arm
+# using binary reward for simplicity
+def reward(arm, reward_prob):
+    return np.random.binomial(n=1, p=reward_prob[arm])
 
-    def update(self, chosen_arm, reward):
-        """Update the weights and probabilities."""
-        # Compute the estimated reward
-        x_hat = reward / self.probabilities[chosen_arm]
+
+def exp3(num_arms, horizon, lr):
+    cum_reward = np.zeros(num_arms)
+    plot = np.zeros((horizon, num_arms))
+    p_t = np.full(num_arms, 1/num_arms)
+    for t in range(horizon):
+        # update prob
+        p_t = np.exp(lr*cum_reward)/np.sum(np.exp(lr*cum_reward))
+        # choose arm A_t
+        arm = np.random.choice(num_arms, p=p_t)
+        indicator = np.zeros(num_arms)
+        indicator[arm] = 1
+        # receive X_t
+        X_t = reward(arm, reward_prob)
+        estimated_reward = 1 - (indicator*(1 - X_t))/p_t
+        if t <= 10:
+            print("Run", t)
+            print("arm =", arm)
+            print("X_t =", X_t)
+            print("prob =", p_t)
+            print("reward", estimated_reward)
+            print("-------")
+        # update the sum reward for all arms
+        cum_reward += estimated_reward
+        plot[t] = cum_reward
         
-        # Update the rewards for the chosen arm
-        self.rewards[chosen_arm] += reward
-        
-        # Update weight for the chosen arm
-        self.weights[chosen_arm] *= np.exp(self.learning_rate * x_hat / self.num_arms)
-        
-        # Update the probabilities for all arms
-        self.probabilities = self.weights / np.sum(self.weights)
+    return plot, p_t
 
-    def run(self, horizon):
-        """Run the EXP3 algorithm for a specified horizon and store the history."""
-        for t in range(horizon):
-            chosen_arm = self.select_arm()
-            # In a real-world scenario, here we would get a reward for the chosen arm.
-            # For simulation, we will use a random reward.
-            reward = np.random.rand()  # This should be replaced with the actual reward
-            self.update(chosen_arm, reward)
-            self.history.append((chosen_arm, reward))
-        return self.rewards
-
-# Initialize the EXP3 algorithm with 5 arms and a learning rate of 0.1
-exp3 = Exp3(num_arms=5, learning_rate=0.1)
-
-# Run the EXP3 algorithm for a horizon of 1000 time steps
+reward_prob = [0.3, 0.7, 0.2]
+num_arms = 3
 horizon = 1000
-rewards = exp3.run(horizon)
-
-# Plotting the cumulative reward of each arm over time
-cumulative_rewards = np.zeros((horizon, exp3.num_arms))
-for t, (arm, reward) in enumerate(exp3.history):
-    cumulative_rewards[t] = cumulative_rewards[t-1]  # start with the last state
-    cumulative_rewards[t, arm] += reward  # add reward to the selected arm
-
-# Plot the results
+learning_rate = np.sqrt(2*np.log(num_arms)/(horizon*num_arms))
+plot, p_t = exp3(num_arms, horizon, learning_rate)
 plt.figure(figsize=(10, 6))
-for arm in range(exp3.num_arms):
-    plt.plot(cumulative_rewards[:, arm], label=f'Arm {arm+1}')
+for arm in range(num_arms):
+    plt.plot(plot[:, arm], label=f'Arm {arm+1}')
 plt.xlabel('Time step')
 plt.ylabel('Cumulative Reward')
 plt.title('Cumulative Reward of Each Arm Over Time')
 plt.legend()
 plt.show()
+print(p_t)
