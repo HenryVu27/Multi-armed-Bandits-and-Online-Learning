@@ -8,11 +8,11 @@ class Bandit:
         self.N = 0
 
     def pull(self):
-        return np.random.randn() + self.true_mean
+        return np.random.randn()+self.true_mean
 
     def update(self, reward):
         self.N += 1
-        self.estimated_mean = (1 - 1.0 / self.N) * self.estimated_mean + 1.0 / self.N * reward
+        self.estimated_mean = (1-1.0/self.N)*self.estimated_mean+1.0/self.N*reward
 
 # e-greedy
 def epsilon_greedy(bandits, N, epsilon=0.1):
@@ -31,7 +31,7 @@ def epsilon_greedy(bandits, N, epsilon=0.1):
 def ucb1(bandits, N):
     rewards = np.zeros(N)
     for t in range(N):
-        j = np.argmax([b.estimated_mean + np.sqrt(2 * np.log(t + 1) / (b.N + 1)) for b in bandits])
+        j = np.argmax([b.estimated_mean + np.sqrt(2*np.log(t+1)/(b.N+1)) for b in bandits])
         reward = bandits[j].pull()
         bandits[j].update(reward)
         rewards[t] = reward
@@ -52,26 +52,26 @@ def explore_then_commit(bandits, N, M):
         rewards[t] = reward
     return rewards
 
-true_means = [1.0, 2.0, 3.0, 2.2, 2.5, 5.0, 4.0] 
-optimal_mean = max(true_means)
+true_mean = [1.0, 2.0, 3.0, 2.2, 2.5, 5.0, 4.0] 
+best = max(true_mean)
 N = 10000  # number of times we pull an arm
 M = 1000   # exploration phase for etc
 
-eg_bandits = [Bandit(m) for m in true_means]
-ucb_bandits = [Bandit(m) for m in true_means]
-etc_bandits = [Bandit(m) for m in true_means]
+eg = [Bandit(m) for m in true_mean]
+ucb = [Bandit(m) for m in true_mean]
+etc = [Bandit(m) for m in true_mean]
 
-eg_rewards = epsilon_greedy(eg_bandits, N)
-ucb_rewards = ucb1(ucb_bandits, N)
-etc_rewards = explore_then_commit(etc_bandits, N, M)
+eg_rewards = epsilon_greedy(eg, N)
+ucb_rewards = ucb1(ucb, N)
+etc_rewards = explore_then_commit(etc, N, M)
 
 eg_cumulative_rewards = np.cumsum(eg_rewards)
 ucb_cumulative_rewards = np.cumsum(ucb_rewards)
 etc_cumulative_rewards = np.cumsum(etc_rewards)
 
-eg_regret = np.arange(N) * optimal_mean - eg_cumulative_rewards
-ucb_regret = np.arange(N) * optimal_mean - ucb_cumulative_rewards
-etc_regret = np.arange(N) * optimal_mean - etc_cumulative_rewards
+eg_regret = np.arange(N)*best-eg_cumulative_rewards
+ucb_regret = np.arange(N)*best-ucb_cumulative_rewards
+etc_regret = np.arange(N)*best-etc_cumulative_rewards
 
 # plot
 plt.figure(figsize=(12, 8))
