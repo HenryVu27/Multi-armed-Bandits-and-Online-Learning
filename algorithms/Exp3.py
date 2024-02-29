@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True, precision=2)
+np.random.seed(32)
 
-
-# using binary reward for simplicity
+# using bernoulli reward for simplicity
 def reward(arm, reward_prob):
     return np.random.binomial(n=1, p=reward_prob[arm])
 
@@ -11,6 +11,9 @@ def reward(arm, reward_prob):
 def exp3(num_arms, horizon, lr):
     cum_reward = np.zeros(num_arms)
     plot = np.zeros((horizon, num_arms))
+    rewards = np.zeros((horizon, num_arms))
+    act_reward = np.zeros(horizon)
+    probs = np.zeros((horizon, num_arms))
     p_t = np.full(num_arms, 1/num_arms)
     for t in range(horizon):
         # update prob
@@ -31,21 +34,65 @@ def exp3(num_arms, horizon, lr):
             print("-------")
         # update the sum reward for all arms
         cum_reward += estimated_reward
+        # for plotting
+        probs[t] = p_t
+        act_reward[t] = X_t
+        rewards[t] = estimated_reward
         plot[t] = cum_reward
         
-    return plot, p_t
-
-reward_prob = [0.3, 0.7, 0.2]
-num_arms = 3
-horizon = 1000
+    return plot, rewards, probs, act_reward
+reward_prob = [0.1, 0.9, 0.2, 0.3, 0.15]
+best_reward = max(reward_prob)
+num_arms = 5
+horizon = 1500
 learning_rate = np.sqrt(2*np.log(num_arms)/(horizon*num_arms))
-plot, p_t = exp3(num_arms, horizon, learning_rate)
+creward, rewards, probs, act_reward = exp3(num_arms, horizon, learning_rate)
+# Cum reward over time
 plt.figure(figsize=(10, 6))
 for arm in range(num_arms):
-    plt.plot(plot[:, arm], label=f'Arm {arm+1}')
+    plt.plot(creward[:, arm], label=f'Arm {arm+1}')
 plt.xlabel('Time step')
 plt.ylabel('Cumulative Reward')
 plt.title('Cumulative Reward of Each Arm Over Time')
+print(f"Estimated cummulative reward of each arm at the end of round {horizon}: ", creward[horizon-1])
+plt.legend()
+#-------------------------------------------------------
+# Reward over time
+plt.figure(figsize=(10, 6))
+for arm in range(num_arms):
+    plt.plot(rewards[:, arm], label=f'Arm {arm+1}')
+plt.xlabel('Time step')
+plt.ylabel('Estimated Reward')
+plt.title('Estimated Reward of Each Arm Over Time')
 plt.legend()
 plt.show()
-print(p_t)
+print(f"Estimated reward of each arm at the end of round {horizon}: ", rewards[horizon-1])
+#-------------------------------------------------------
+# Weight over time
+plt.figure(figsize=(10, 6))
+for arm in range(num_arms):
+    plt.plot(probs[:, arm], label=f'Arm {arm+1}')
+plt.xlabel('Time step')
+plt.ylabel('Weight')
+plt.title('Weight of Each Arm Over Time')
+plt.legend()
+plt.show()
+print(f"Estimated weight of each arm at the end of round {horizon}: ", probs[horizon-1])
+#-------------------------------------------------------
+# Regret over time
+exp3_sum = np.cumsum(act_reward)
+exp3_regret = (np.arange(horizon)*best_reward - exp3_sum)
+plt.figure(figsize=(10, 6))
+plt.plot(exp3_regret, label='Exp3 Regret')
+plt.legend()
+plt.xlabel('Time step')
+plt.ylabel('Cumulative Regret')
+plt.title('Cumulative Regret of Exp3 Algorithm')
+#-------------------------------------------------------
+exp3_subregret = (np.arange(horizon)*best_reward - exp3_sum)/np.arange(horizon)
+plt.figure(figsize=(10, 6))
+plt.plot(exp3_subregret, label='R_n/n')
+plt.legend()
+plt.xlabel('Time step')
+plt.ylabel('R_n/n')
+plt.title('Sublinearity Regret of Exp3 Algorithm')
