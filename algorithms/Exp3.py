@@ -89,7 +89,7 @@ plt.xlabel('Time step')
 plt.ylabel('Cumulative Regret')
 plt.title('Cumulative Regret of Exp3 Algorithm')
 #-------------------------------------------------------
-exp3_subregret = (np.arange(horizon)*best_reward - exp3_sum)/np.arange(horizon)
+exp3_subregret = (np.arange(horizon)*best_reward - exp3_sum)/np.arange(1,horizon+1)
 plt.figure(figsize=(10, 6))
 plt.plot(exp3_subregret, label='R_n/n')
 plt.legend()

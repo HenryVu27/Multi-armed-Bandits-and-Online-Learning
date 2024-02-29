@@ -42,10 +42,8 @@ def explore_then_commit(bandits, N, M):
     rewards = np.zeros(N)
     for t in range(N):
         if t < M:
-            # Exploration phase
             j = t % len(bandits)
         else:
-            # Commitment phase
             j = np.argmax([b.estimated_mean for b in bandits])
         reward = bandits[j].pull()
         bandits[j].update(reward)
@@ -54,7 +52,7 @@ def explore_then_commit(bandits, N, M):
 
 true_mean = [1.0, 2.0, 3.0, 2.2, 2.5, 5.0, 4.0] 
 best = max(true_mean)
-N = 10000  # number of times we pull an arm
+N = 10000  # horizon
 M = 1000   # exploration phase for etc
 
 eg = [Bandit(m) for m in true_mean]
@@ -73,8 +71,12 @@ eg_regret = np.arange(N)*best-eg_cumulative_rewards
 ucb_regret = np.arange(N)*best-ucb_cumulative_rewards
 etc_regret = np.arange(N)*best-etc_cumulative_rewards
 
+eg_regretn = (np.arange(N)*best-eg_cumulative_rewards)/np.arange(1,N+1)
+ucb_regretn = (np.arange(N)*best-ucb_cumulative_rewards)/np.arange(1,N+1)
+etc_regretn = (np.arange(N)*best-etc_cumulative_rewards)/np.arange(1,N+1)
+
 # plot
-plt.figure(figsize=(12, 8))
+plt.figure(figsize=(10, 6))
 plt.plot(eg_regret, label='Epsilon-Greedy Regret')
 plt.plot(ucb_regret, label='UCB1 Regret')
 plt.plot(etc_regret, label='Explore-Then-Commit Regret')
@@ -82,4 +84,14 @@ plt.legend()
 plt.xlabel('Steps')
 plt.ylabel('Cumulative Regret')
 plt.title('Comparison of Cumulative Regret')
+plt.show()
+# ---------------------------
+plt.figure(figsize=(10, 6))
+plt.plot(eg_regretn, label='Epsilon-Greedy Regret')
+plt.plot(ucb_regretn, label='UCB1 Regret')
+plt.plot(etc_regretn, label='Explore-Then-Commit Regret')
+plt.legend()
+plt.xlabel('Steps')
+plt.ylabel('Rn/m')
+plt.title('Comparison of Rn/n')
 plt.show()
