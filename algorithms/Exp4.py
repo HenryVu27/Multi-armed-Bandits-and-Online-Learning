@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(suppress=True, precision=2)
 np.random.seed(32)
-
+# NOT YET DONE, THIS CODE IS NOT THE CORRECT IMPLEMENTATION OF EXP4
 # using bernoulli reward for simplicity
 def reward(arm, reward_prob):
     return np.random.binomial(n=1, p=reward_prob[arm])
