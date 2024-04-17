@@ -1,6 +1,6 @@
 # Datasets
 
-The dataset contains 10,000 instances corresponding to distinct site visits by users-events in the language of this part. Each instance comprises 102 space-delimited columns of integers:
+The dataset dataset.txt contains 10,000 instances of users and news articles. Each instance contains 102 columns with the following information:
  - Column 1: The arm played by a uniformly random policy (arms numbered 0-9)
  - Column 2: The reward received from the arm played|1 if the user clicked 0 otherwise; and
  - Columns 3-102: The 100-dim flattened context; 10 features per arm (incorporating the content of the article and its match with the visiting user)
