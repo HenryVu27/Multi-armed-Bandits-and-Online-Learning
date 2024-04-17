@@ -16,5 +16,5 @@ Off-policy evaluation (OPE) [1] is used for evaluation.
 
 # References 
 
-[1] Lihong Li, Wei Chu, John Langford, Robert E. Schapire, ‘A Contextual-Bandit Approach to Personalized News Article Recommendation’, in Proceedings of the Nineteenth International Conference on World Wide Web (WWW’2010), Raleigh, NC, USA, 2010. 
+[1] Li, Lihong, et al. "Unbiased offline evaluation of contextual-bandit-based news article recommendation algorithms." Proceedings of the fourth ACM international conference on Web search and data mining. 2011.
 https://arxiv.org/pdf/1003.0146.pdf
