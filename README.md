@@ -1,5 +1,5 @@
 # Multi-Armed Bandit
-Welcome to the MAB repository. The Multi-Armed Bandit problem is a classic example of decision-making under uncertainty, often encountered in reinforcement learning, optimization, and many other fields. This repo contains the theory and some implementations of various MAB algorithms.
+Welcome to the MAB repository. The Multi-Armed Bandit problem is a classic example of decision-making under uncertainty, often encountered in reinforcement learning, optimization, and many other fields. This repo contains the theory and some implementations of various classic MAB algorithms such as $\epsilon$-greedy, UCB, Exp3, Exp4, and Thompson Sampling.
 
 ## Repository Structure
 
