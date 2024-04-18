@@ -6,5 +6,7 @@ Welcome to the MAB repository. The Multi-Armed Bandit problem is a classic examp
 - `/algorithms` - Contains implementation of various MAB algorithms in Python.
 - `/slides` - Contains presentation slides for each topic.
 - `/theory` - Includes theoretical explanations and derivations related to MAB problems and algorithms.
+- `/project` - Capstone project.
+
 
 
