@@ -1,91 +1,104 @@
-# Multi-armed bandits and online learning
+# Multi-armed bandits and online algorithms
 
-This repo is from undergraduate research at the University of Alberta on sequential decision-making under uncertainty. The code runs classic multi-armed bandit algorithms on simulated arms and evaluates contextual bandits offline on logged news-recommendation data.
+Undergraduate research at the University of Alberta, with Amii and SODALab, from 2022 to 2024 on sequential decision-making under uncertainty. It covers multi-armed bandits in the stochastic, Bayesian, adversarial, contextual and restless settings, and online algorithms that use machine-learned predictions.
 
-The research also covered Markovian and restless bandits. On the online-learning side, it covered the online primal-dual method and online algorithms that use machine-learned predictions. Those topics appear only in the slides and notes listed below. This repo has no code for them.
+## About this code
 
-The blog post [Multi-Armed Bandits: Foundations](https://henryvu.blog/series/bandits/part1.html) explains the bandit setting and the upper confidence bound (UCB) algorithm in more depth.
+The research code from 2022 to 2024 lived on a computer that no longer exists. In October 2026 I rebuilt it from the slides and the report in this repo, working with Claude as a coding assistant. The rebuild is the `mab/` and `online/` packages with their experiments and tests. The scripts in `algorithms/` and `project/` are the originals that survived from 2023.
 
-## Contents
-
-| Path | What it holds |
-|---|---|
-| `algorithms/Algorithms Comparison.py` | ε-greedy, UCB1 and explore-then-commit (ETC) on simulated Gaussian arms |
-| `algorithms/Exp3.py` | Exp3 (exponential weights for exploration and exploitation) on simulated Bernoulli arms |
-| `algorithms/Thompson.py` | Thompson sampling with Beta priors on simulated Bernoulli arms |
-| `algorithms/Exp4.py` | Unfinished draft of Exp4 that still runs the Exp3 code |
-| `project/MABs.ipynb` | Offline evaluation of ε-greedy, UCB and LinUCB (linear UCB) on logged news-recommendation data |
-| `project/dataset.txt` | The 10,000 logged events the notebook uses |
-| `visualization/` | Figures saved from `Algorithms Comparison.py` and `Exp3.py` |
-| `slides/` | Seven slide decks on bandits, from the introduction to the Gittins and Whittle indices |
-| `online_learning/` | Slide decks on online algorithms, from convex duality and the online primal-dual method to learning-augmented algorithms for online conversion |
-| `Final Report.pdf` | Written notes with the derivations behind the slides, including regret bounds for ETC, UCB, Exp3 and Exp4 |
+Every algorithm follows the derivation in [`Final Report.pdf`](Final%20Report.pdf), the decks in [`slides/`](slides) and [`online_learning/`](online_learning), or the paper they cite. The tests check each one against its proven guarantee. The blog post [Multi-Armed Bandits: Foundations](https://henryvu.blog/series/bandits/part1.html) explains the bandit setting and the upper confidence bound (UCB) algorithm in more depth.
 
 ## Results
 
+Every experiment is seeded and reruns to the same numbers.
+
 ### Stochastic arms
 
-`Algorithms Comparison.py` runs ε-greedy (ε = 0.1), UCB1 and ETC for 10,000 steps on seven arms with unit-variance Gaussian rewards and means between 1.0 and 5.0. ETC plays the arms in turn for the first 1,000 steps and then plays the arm with the highest sample mean.
+Five Gaussian arms with means 1.0 to 0.2, 10,000 rounds, 200 seeds. UCB1 ends with regret 207.5. Explore-then-commit (ETC) with 200 pulls per arm ends at 436.0, under its bound of 644.8, and 400 of that is the cost of exploring. ε-greedy with ε = 0.1 never stops exploring, so its regret grows linearly to 479.9.
+
+<img src="figures/stochastic_regret.png" alt="Cumulative regret of explore-then-commit, epsilon-greedy and UCB1 over 10,000 rounds, with the ETC bound" width="70%">
+
+### Bayesian bandits and the Gittins index
+
+On three Bernoulli arms (0.9, 0.5 and 0.2) over 5,000 rounds, Thompson sampling ends with regret 7.9 against 76.4 for UCB1. Bayesian greedy averages 114.9 because some runs lock onto the 0.5 arm and never leave. The Gittins index is computed by calibration with the report's dynamic program, and it matches R. Weber's published table for γ = 0.9 in all 64 cells (Beta(1, 1) gives 0.7029).
 
 <p>
-<img src="visualization/eg%20vs%20ucb%20vs%20etc.png" alt="Cumulative regret of epsilon-greedy, UCB1 and explore-then-commit over 10,000 steps" width="49%">
-<img src="visualization/eg%20vs%20ucb%20vs%20etc%20_n.png" alt="Average regret per step of epsilon-greedy, UCB1 and explore-then-commit" width="49%">
+<img src="figures/bayesian_regret.png" alt="Regret of Thompson sampling, Bayesian greedy and UCB1 on three Bernoulli arms" width="49%">
+<img src="figures/gittins_indices.png" alt="Gittins indices for Beta priors with alpha and beta from 1 to 8 at discount 0.9" width="49%">
 </p>
 
-In this run UCB1 ends with the least regret. ETC collects most of its regret during the 1,000 exploration steps and then stays flat. ε-greedy never stops exploring, so its regret keeps growing linearly and its average regret per step (right) levels off above zero.
+### Adversarial bandits
 
-### Exp3
-
-`Exp3.py` runs Exp3 for 1,500 rounds on five Bernoulli arms with success probabilities 0.1, 0.9, 0.2, 0.3 and 0.15. It uses the importance-weighted reward estimate and the learning rate $\sqrt{2\ln K/(nK)}$ for $K$ arms and horizon $n$ from Lattimore and Szepesvári. Exp3 is designed for rewards chosen by an adversary. This simulation draws them from fixed Bernoulli distributions.
+Against an adversary that pays only the arm the learner is least likely to pull, the deterministic UCB1 earns nothing and its regret grows to 8,000 over 10,000 rounds. Exp3 and Exp3-IX stay under Exp3's bound of √(2nK log K) ≈ 401. On a table whose best arm switches, 8.8% of Exp3 runs end above that bound and no Exp3-IX run does, because implicit exploration caps how much one unlucky round can cost an arm.
 
 <p>
-<img src="visualization/exp3%20weights.png" alt="Probability Exp3 assigns to each of five arms over 1,500 rounds" width="49%">
-<img src="visualization/exp3%20regret%20sublinear.png" alt="Exp3 average regret per step over 1,500 rounds" width="49%">
+<img src="figures/adaptive_regret.png" alt="Regret of UCB1, Exp3 and Exp3-IX against an adaptive adversary" width="49%">
+<img src="figures/exp3_vs_exp3ix.png" alt="Spread of final regret for Exp3 and Exp3-IX over 1,000 seeds" width="49%">
 </p>
 
-The probability on arm 2, the arm that pays off 90% of the time, rises to nearly 1 within about 600 rounds (left). Average regret per step falls from about 0.7 to about 0.05 by round 1,500 (right), which is consistent with sublinear regret.
+### Contextual bandits
 
-The [estimated reward plot](visualization/exp3%20estimated%20reward.png) shows the cost of importance weighting. When Exp3 pulls an arm it rarely plays and gets no reward, that round's estimate for the arm is 1 - 1/p, where p is the arm's probability. For arm 3 this reached about -1,300. The `visualization/` folder also has the cumulative regret and each arm's cumulative estimated reward.
+With 32 experts of which one is informative, Exp4 ends with regret 299 against the best expert, a quarter of per-context Exp3's 1,167. On the logged news-recommendation data, scored with the replay method of Li et al. (2011) and every parameter fixed in advance, LinUCB reaches a click rate of 0.533. The best single article gets 0.268.
 
-### Thompson sampling
+<p>
+<img src="figures/exp4.png" alt="Regret of Exp4 and per-context Exp3 against the best expert" width="49%">
+<img src="figures/linucb_replay.png" alt="Replay click rate of LinUCB, epsilon-greedy and UCB on logged news data" width="49%">
+</p>
 
-`Thompson.py` runs Thompson sampling with Beta(1, 1) priors for 5,000 rounds on three Bernoulli arms with success probabilities 0.9, 0.5 and 0.2. It plots each arm's posterior mean and the per-step regret when run. Neither plot is saved in the repo.
+### Restless bandits and the Whittle index
 
-### Contextual bandits on logged data
+Ten two-state arms that tire when worked and recover when rested, with m of them pulled each round. When m is 6 to 9, the Whittle index policy reaches 98.3% to 99.2% of the relaxation's upper bound and the myopic policy 86% to 90%.
 
-`project/MABs.ipynb` compares two policies that ignore context, ε-greedy and UCB, with LinUCB, which fits a ridge regression per arm on 10-feature context vectors. The data is 10,000 logged events in which a uniformly random policy showed one of 10 news articles and recorded a click (reward 1) or no click (reward 0).
+<img src="figures/restless_whittle.png" alt="Average reward of Whittle, myopic and random policies as the budget grows" width="70%">
 
-Evaluation uses the replay method of Li et al. (2011). The policy sees each logged event in order. When it picks the article the log recorded, the event counts toward its reward and the policy updates. Otherwise the event is skipped. Each run stops after 800 matched events.
+### Online algorithms with predictions
 
-| Policy | Average reward over 800 matched events |
+For one-way trading with a price range ratio of 5 and trust parameter λ = 0.5, the Pareto-optimal algorithm of Sun et al. (2021) gets within 3% of the best price in hindsight with a perfect prediction, where the classical algorithm's ratio is 1.72, and never exceeds its robustness of 3.36. The primal-dual ski rental algorithm of Bamas et al. (2020) at λ = 0.5 costs 1.276 times the optimum with a perfect prediction and at most 2.551 times otherwise, both exactly its proven bounds. The knapsack threshold rule reaches its bound of 1 + ln θ, and water-filling matching reaches 1 − 1/e on the hard upper-triangular instance, where greedy falls to one half.
+
+<p>
+<img src="figures/online_conversion.png" alt="Worst-case ratio against prediction error for learning-augmented online conversion" width="49%">
+<img src="figures/online_ski_rental.png" alt="Worst-case ratio against prediction error for learning-augmented ski rental" width="49%">
+</p>
+
+## Layout
+
+| Path | What it holds |
 |---|---|
-| ε-greedy, ε = 0.1 | 0.21 |
-| UCB | 0.14 |
-| LinUCB, α = 1 | 0.53 |
-| LinUCB, α ≈ 0.026 | about 0.73 |
-
-LinUCB, which uses the context, earns more than either policy that ignores it. Lowering its exploration parameter α from 1 raises its reward further. A sweep over 50 values of α between 0.001 and 1 picked α ≈ 0.026. That value was chosen on the same replayed events it is scored on, so its 0.73 is an optimistic estimate. The notebook sets no random seed, so the ε-greedy and UCB numbers shift a little between runs. The plots of the α sweep and of each policy's running average reward are in the notebook's saved outputs.
+| `mab/stochastic.py` | Gaussian and Bernoulli arms; explore-then-commit, UCB1 and ε-greedy; the ETC regret bound |
+| `mab/bayesian.py` | Thompson sampling, Bayesian greedy, and the Gittins index by calibration |
+| `mab/adversarial.py` | Oblivious and adaptive adversaries; Hedge, Exp3 and Exp3-IX |
+| `mab/contextual.py` | Per-context Exp3, Exp4 with expert advice, LinUCB and replay evaluation |
+| `mab/restless.py` | Two-state restless arms, the Whittle index, an indexability check and index policies |
+| `online/conversion.py` | 1-max-search and one-way trading, classical and learning-augmented (Sun et al. 2021) |
+| `online/ski_rental.py` | Break-even, primal-dual, and learning-augmented primal-dual ski rental (Bamas et al. 2020) |
+| `online/knapsack.py` | Online fractional knapsack with the Zhou, Chakrabarty and Lukose threshold |
+| `online/matching.py` | Online fractional bipartite matching by water-filling, against greedy |
+| `experiments/` | One script per figure in `figures/` |
+| `tests/` | Checks each algorithm against its guarantee |
+| `algorithms/`, `project/`, `visualization/` | The 2023 scripts, the LinUCB notebook and their figures |
+| `slides/`, `online_learning/`, `Final Report.pdf` | The research decks and notes the rebuild follows |
 
 ## Running the code
 
-The scripts need NumPy and Matplotlib, and the notebook also needs Jupyter. There is no requirements file.
-
 ```bash
-pip install numpy matplotlib jupyter
-python "algorithms/Algorithms Comparison.py"
-python algorithms/Exp3.py
-python algorithms/Thompson.py
-cd project && jupyter notebook MABs.ipynb
+pip install -r requirements.txt
+python -m pytest -q
+python experiments/stochastic_regret.py
 ```
 
-`Exp3.py` and `Thompson.py` fix the random seed at 32. `Algorithms Comparison.py` and the notebook do not. `Exp3.py` and `Thompson.py` create their last figures after the final `plt.show()` call, so run them with `%run` in Jupyter or IPython to see every figure. The notebook reads `dataset.txt` from its working directory, so start Jupyter from `project/`.
+Each script in `experiments/` writes its figures to `figures/`. The Gittins and restless experiments take one to two minutes; the rest take seconds.
 
 ## References
 
-- Tor Lattimore and Csaba Szepesvári, *Bandit Algorithms*, Cambridge University Press, 2020. The notes and the Exp3 implementation follow this book, and the Exp3 learning rate comes from its Theorem 11.2.
-- Peter Auer, Nicolò Cesa-Bianchi and Paul Fischer, "Finite-time analysis of the multiarmed bandit problem," *Machine Learning*, 2002. Source of UCB1.
-- Peter Auer, Nicolò Cesa-Bianchi, Yoav Freund and Robert E. Schapire, "The nonstochastic multiarmed bandit problem," *SIAM Journal on Computing*, 2002. Source of Exp3.
-- William R. Thompson, "On the likelihood that one unknown probability exceeds another in view of the evidence of two samples," *Biometrika*, 1933. Source of Thompson sampling.
-- Lihong Li, Wei Chu, John Langford and Robert E. Schapire, "A contextual-bandit approach to personalized news article recommendation," International Conference on World Wide Web, 2010, [arXiv:1003.0146](https://arxiv.org/abs/1003.0146). Source of LinUCB.
-- Lihong Li, Wei Chu, John Langford and Xuanhui Wang, "Unbiased offline evaluation of contextual-bandit-based news article recommendation algorithms," International Conference on Web Search and Data Mining, 2011, [arXiv:1003.5956](https://arxiv.org/abs/1003.5956). Source of the replay evaluation.
-- Bo Sun, Russell Lee, Mohammad Hajiesmaili, Adam Wierman and Danny H. K. Tsang, "Pareto-optimal learning-augmented algorithms for online conversion problems," Advances in Neural Information Processing Systems, 2021, [arXiv:2109.01556](https://arxiv.org/abs/2109.01556). Presented in the `online_learning/` slides.
+- Tor Lattimore and Csaba Szepesvári, *Bandit Algorithms*, Cambridge University Press, 2020. The report and most of the bandit code follow this book.
+- Peter Auer, Nicolò Cesa-Bianchi and Paul Fischer, "Finite-time analysis of the multiarmed bandit problem," *Machine Learning*, 2002.
+- Peter Auer, Nicolò Cesa-Bianchi, Yoav Freund and Robert E. Schapire, "The nonstochastic multiarmed bandit problem," *SIAM Journal on Computing*, 2002.
+- Gergely Neu, "Explore no more: Improved high-probability regret bounds for non-stochastic bandits," NeurIPS, 2015. Source of Exp3-IX.
+- J. C. Gittins, "Bandit processes and dynamic allocation indices," *Journal of the Royal Statistical Society B*, 1979.
+- P. Whittle, "Restless bandits: activity allocation in a changing world," *Journal of Applied Probability*, 1988.
+- Lihong Li, Wei Chu, John Langford and Robert E. Schapire, "A contextual-bandit approach to personalized news article recommendation," WWW, 2010, [arXiv:1003.0146](https://arxiv.org/abs/1003.0146).
+- Lihong Li, Wei Chu, John Langford and Xuanhui Wang, "Unbiased offline evaluation of contextual-bandit-based news article recommendation algorithms," WSDM, 2011, [arXiv:1003.5956](https://arxiv.org/abs/1003.5956).
+- Bo Sun, Russell Lee, Mohammad Hajiesmaili, Adam Wierman and Danny H. K. Tsang, "Pareto-optimal learning-augmented algorithms for online conversion problems," NeurIPS, 2021, [arXiv:2109.01556](https://arxiv.org/abs/2109.01556).
+- Étienne Bamas, Andreas Maggiori and Ola Svensson, "The primal-dual method for learning augmented algorithms," NeurIPS, 2020, [arXiv:2010.11632](https://arxiv.org/abs/2010.11632).
+- Yunhong Zhou, Deeparnab Chakrabarty and Rajan Lukose, "Budget constrained bidding in keyword auctions and online knapsack problems," WINE, 2008.
+- Niv Buchbinder, Kamal Jain and Joseph Naor, "Online primal-dual algorithms for maximizing ad-auctions revenue," ESA, 2007.
